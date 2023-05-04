@@ -1,7 +1,8 @@
 package forex.domain
 
 case class Rate(
-    pair: Rate.Pair,
+    from: Currency,
+    to: Currency,
     price: Price,
     timestamp: Timestamp
 )
