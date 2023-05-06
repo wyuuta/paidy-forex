@@ -14,7 +14,7 @@ object Main extends IOApp {
 
 }
 
-class Application[F[_]: ConcurrentEffect: Timer] {
+class Application[F[_]: ConcurrentEffect: ContextShift : Timer] {
 
   def stream(ec: ExecutionContext): Stream[F, Unit] =
     for {

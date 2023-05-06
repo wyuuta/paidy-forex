@@ -14,11 +14,6 @@ object Protocol {
 
   implicit val configuration: Configuration = Configuration.default.withSnakeCaseMemberNames
 
-  final case class GetApiRequest(
-      from: Currency,
-      to: Currency
-  )
-
   final case class GetApiResponse(
       from: Currency,
       to: Currency,
@@ -57,6 +52,16 @@ object Protocol {
       to <- cursor.downField("to").as[Currency]
       price <- cursor.downField("price").as[BigDecimal]
       timestamp <- cursor.downField("time_stamp").as[OffsetDateTime]
+    } yield {
+      Rate(from, to, Price(price), Timestamp(timestamp))
+    }
+
+  implicit val redisRateDecoder: Decoder[Rate] = (cursor: HCursor) =>
+    for {
+      from <- cursor.downField("from").as[Currency]
+      to <- cursor.downField("to").as[Currency]
+      price <- cursor.downField("price").as[BigDecimal]
+      timestamp <- cursor.downField("timestamp").as[OffsetDateTime]
     } yield {
       Rate(from, to, Price(price), Timestamp(timestamp))
     }
