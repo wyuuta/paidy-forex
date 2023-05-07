@@ -10,6 +10,7 @@ object Dependencies {
     val circe               = "0.13.0"
     val pureConfig          = "0.14.1"
     val redis4Cats          = "0.14.0"
+    val log4Cats            = "1.2.2"
 
     val kindProjector       = "0.10.3"
     val logback             = "1.2.3"
@@ -36,6 +37,7 @@ object Dependencies {
     lazy val circeParser         = circe("circe-parser")
     lazy val pureConfig          = "com.github.pureconfig" %% "pureconfig"                 % Versions.pureConfig
     lazy val redis4Cats          = "dev.profunktor" % "redis4cats-effects_2.13"            % Versions.redis4Cats
+    lazy val log4CatsSlf4j       = "org.typelevel" %% "log4cats-slf4j"                     % Versions.log4Cats
 
     // Compiler plugins
     lazy val kindProjector       = "org.typelevel"         %% "kind-projector"             % Versions.kindProjector

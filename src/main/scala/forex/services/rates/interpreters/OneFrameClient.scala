@@ -1,7 +1,7 @@
 package forex.services.rates.interpreters
 
 import cats.effect.{ConcurrentEffect, Resource}
-import cats.implicits.{catsSyntaxApplicativeError, catsSyntaxEitherId, toFunctorOps}
+import cats.implicits.{catsSyntaxApplicativeError, catsSyntaxEitherId, toFlatMapOps, toFunctorOps}
 import forex.config.OneFrameConfig
 import forex.domain.{Currency, Rate}
 import forex.http.rates.Protocol.rateListDecoder
@@ -12,6 +12,8 @@ import org.http4s._
 import org.http4s.circe.jsonOf
 import org.http4s.client.Client
 import org.http4s.client.blaze.BlazeClientBuilder
+import org.typelevel.log4cats.SelfAwareStructuredLogger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.DurationInt
@@ -19,6 +21,7 @@ import scala.concurrent.duration.DurationInt
 class OneFrameClient[F[_]: ConcurrentEffect](config: OneFrameConfig) extends Algebra[F] {
 
   private implicit val responseEntityDecoder: EntityDecoder[F, List[Rate]] = jsonOf[F, List[Rate]]
+  val logger: F[SelfAwareStructuredLogger[F]] = Slf4jLogger.create[F]
   private val httpClientResource : Resource[F, Client[F]] = BlazeClientBuilder[F](ExecutionContext.global)
     .withIdleTimeout(1.minutes)
     .resource
@@ -52,7 +55,10 @@ class OneFrameClient[F[_]: ConcurrentEffect](config: OneFrameConfig) extends Alg
 
     httpClientResource.use(client => client.expect[List[Rate]](request))
       .map(response => response.asRight[OneFrameError])
-      .handleError(err => OneFrameLookupFailed(err.getMessage).asLeft[List[Rate]])
+      .handleErrorWith(err => {
+        logger.flatMap(logger => logger.error(err)("OneFrame request failure"))
+          .map(_ => OneFrameLookupFailed("OneFrame request failure").asLeft[List[Rate]])
+      })
   }
 
 }
