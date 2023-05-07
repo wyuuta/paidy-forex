@@ -67,6 +67,7 @@ libraryDependencies ++= Seq(
   Libraries.log4CatsSlf4j,
   Libraries.logback,
   Libraries.scalaTest        % Test,
+  Libraries.scalaTestMockito % Test,
   Libraries.scalaCheck       % Test,
-  Libraries.catsScalaCheck   % Test
+  Libraries.catsScalaCheck   % Test,
 )

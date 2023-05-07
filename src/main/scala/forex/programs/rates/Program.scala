@@ -12,7 +12,15 @@ class Program[F[_]: Concurrent](
     redisService: RedisService[F]
 ) extends Algebra[F] {
 
-  private def getAndStoreRates(request: Protocol.GetRatesRequest) : F[Either[Error, Rate]] =
+  override def get(request: Protocol.GetRatesRequest): F[Error Either Rate] = redisService
+    .get(s"${request.from}${request.to}")
+    .flatMap {
+      case Right(value) => value.asRight[Error].pure[F]
+      case Left(_ : RedisEmpty) => getAndStoreRate(request)
+      case Left(err) => toProgramError(err).asLeft[Rate].pure[F]
+    }
+
+  private def getAndStoreRate(request: Protocol.GetRatesRequest): F[Either[Error, Rate]] =
     ratesService.getAllRates()
       .flatMap {
         case Right(rates) => redisService.store(rates)
@@ -22,14 +30,6 @@ class Program[F[_]: Concurrent](
           }
         case Left(error) => toProgramError(error).asLeft[Rate].pure[F]
       }
-
-  override def get(request: Protocol.GetRatesRequest): F[Error Either Rate] = redisService
-    .get(s"${request.from}${request.to}")
-    .flatMap {
-      case Right(value) => value.asRight[Error].pure[F]
-      case Left(_ : RedisEmpty) => getAndStoreRates(request)
-      case Left(err) => toProgramError(err).asLeft[Rate].pure[F]
-    }
 }
 
 object Program {

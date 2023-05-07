@@ -15,7 +15,8 @@ object Dependencies {
     val kindProjector       = "0.10.3"
     val logback             = "1.2.3"
     val scalaCheck          = "1.15.3"
-    val scalaTest           = "3.2.7"
+    val scalaTest           = "3.2.15"
+    val scalaTestMockito    = "3.2.15.0"
     val catsScalaCheck      = "0.3.0"
   }
 
@@ -47,6 +48,7 @@ object Dependencies {
 
     // Test
     lazy val scalaTest           = "org.scalatest"         %% "scalatest"                  % Versions.scalaTest
+    lazy val scalaTestMockito    = "org.scalatestplus"     %% "mockito-4-6"                % Versions.scalaTestMockito
     lazy val scalaCheck          = "org.scalacheck"        %% "scalacheck"                 % Versions.scalaCheck
     lazy val catsScalaCheck      = "io.chrisdavenport"     %% "cats-scalacheck"            % Versions.catsScalaCheck
   }

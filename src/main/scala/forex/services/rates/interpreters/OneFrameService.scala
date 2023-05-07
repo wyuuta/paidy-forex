@@ -1,6 +1,6 @@
 package forex.services.rates.interpreters
 
-import cats.effect.{ConcurrentEffect, Resource}
+import cats.effect.{Concurrent, Resource}
 import cats.implicits.{catsSyntaxApplicativeError, catsSyntaxEitherId, toFlatMapOps, toFunctorOps}
 import forex.config.OneFrameConfig
 import forex.domain.{Currency, Rate}
@@ -11,20 +11,14 @@ import forex.services.rates.Errors._
 import org.http4s._
 import org.http4s.circe.jsonOf
 import org.http4s.client.Client
-import org.http4s.client.blaze.BlazeClientBuilder
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
-import scala.concurrent.ExecutionContext
-import scala.concurrent.duration.DurationInt
-
-class OneFrameClient[F[_]: ConcurrentEffect](config: OneFrameConfig) extends Algebra[F] {
+class OneFrameService[F[_]: Concurrent](config: OneFrameConfig,
+                                        httpClientResource: Resource[F, Client[F]]) extends Algebra[F] {
 
   private implicit val responseEntityDecoder: EntityDecoder[F, List[Rate]] = jsonOf[F, List[Rate]]
-  val logger: F[SelfAwareStructuredLogger[F]] = Slf4jLogger.create[F]
-  private val httpClientResource : Resource[F, Client[F]] = BlazeClientBuilder[F](ExecutionContext.global)
-    .withIdleTimeout(1.minutes)
-    .resource
+  private val logger: F[SelfAwareStructuredLogger[F]] = Slf4jLogger.create[F]
 
   private val currencies: List[Currency] = List(
       Currency.AUD,
