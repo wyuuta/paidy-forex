@@ -106,7 +106,7 @@ class RedisRateServiceTest extends AnyFlatSpec {
 
     doThrow(new IllegalArgumentException())
       .when(client)
-      .get(anyString())
+      .setEx(anyString(), anyString(), any[FiniteDuration])
 
     val result = new RedisRateService[IO](clientResource).store(rates).unsafeRunSync();
 

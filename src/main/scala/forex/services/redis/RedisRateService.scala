@@ -17,21 +17,20 @@ import scala.concurrent.duration.{DurationInt, FiniteDuration}
 class RedisRateService[F[_] : Concurrent](redisClientResource: Resource[F, RedisCommands[F, String, String]])
   extends Algebra[F] {
 
-  val logger: F[SelfAwareStructuredLogger[F]] = Slf4jLogger.create[F]
-  val expiredDuration: FiniteDuration = 4.minutes
+  private val logger: F[SelfAwareStructuredLogger[F]] = Slf4jLogger.create[F]
 
-  val connectionFailed: RedisConnectionFailed = RedisConnectionFailed("Redis connection failed")
-  val redisEmpty: RedisEmpty = RedisEmpty()
+  private val expiredDuration: FiniteDuration = 4.minutes
+  private val connectionFailedErrorMessage = "Redis connection failed"
 
   override def get(key: String): F[Either[RedisError, Rate]] = redisClientResource
     .use(client => client.get(key))
     .map {
       case Some(value) => parser.decode[Rate](value).toOption.get.asRight[RedisError]
-      case None => redisEmpty.asLeft[Rate]
+      case None => RedisEmpty().asLeft[Rate]
     }
     .handleErrorWith(err => {
-      logger.flatMap(logger => logger.error(err)(connectionFailed.msg))
-        .map(_ => connectionFailed.asLeft[Rate])
+      logger.flatMap(logger => logger.error(err)(connectionFailedErrorMessage))
+        .map(_ => RedisConnectionFailed(connectionFailedErrorMessage).asLeft[Rate])
     })
 
   override def store(rates: List[Rate]): F[Either[RedisConnectionFailed, Boolean]] = redisClientResource
@@ -40,7 +39,8 @@ class RedisRateService[F[_] : Concurrent](redisClientResource: Resource[F, Redis
     })
     .map(_ => true.asRight[RedisConnectionFailed])
     .handleErrorWith(err => {
-      logger.flatMap(logger => logger.error(err)(connectionFailed.msg))
-        .map(_ => connectionFailed.asLeft[Boolean])
+      logger.flatMap(logger => logger.error(err)(connectionFailedErrorMessage))
+        .map(_ => RedisConnectionFailed(connectionFailedErrorMessage).asLeft[Boolean])
     })
+
 }

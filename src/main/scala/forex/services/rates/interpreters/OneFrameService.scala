@@ -20,6 +20,8 @@ class OneFrameService[F[_]: Concurrent](config: OneFrameConfig,
   private implicit val responseEntityDecoder: EntityDecoder[F, List[Rate]] = jsonOf[F, List[Rate]]
   private val logger: F[SelfAwareStructuredLogger[F]] = Slf4jLogger.create[F]
 
+  private val oneFrameErrorMessage = "OneFrame request failure"
+
   private val currencies: List[Currency] = List(
       Currency.AUD,
       Currency.CAD,
@@ -50,8 +52,8 @@ class OneFrameService[F[_]: Concurrent](config: OneFrameConfig,
     httpClientResource.use(client => client.expect[List[Rate]](request))
       .map(response => response.asRight[OneFrameError])
       .handleErrorWith(err => {
-        logger.flatMap(logger => logger.error(err)("OneFrame request failure"))
-          .map(_ => OneFrameLookupFailed("OneFrame request failure").asLeft[List[Rate]])
+        logger.flatMap(logger => logger.error(err)(oneFrameErrorMessage))
+          .map(_ => OneFrameLookupFailed(oneFrameErrorMessage).asLeft[List[Rate]])
       })
   }
 
