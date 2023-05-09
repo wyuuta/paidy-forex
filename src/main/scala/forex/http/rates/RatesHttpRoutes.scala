@@ -22,7 +22,9 @@ class RatesHttpRoutes[F[_]: Sync](rates: RatesProgram[F]) extends Http4sDsl[F] {
       rates.get(RatesProgramProtocol.GetRatesRequest(from, to))
         .flatMap {
           case Right(rate) => Ok(rate)
-          case Left(err : RateLookupFailed)   => InternalServerError(err.msg)
+          case Left(err : RateLookupFailed)   => InternalServerError(
+            ErrorResponse("rate-lookup-failed", err.msg)
+          )
         }
   }
 
